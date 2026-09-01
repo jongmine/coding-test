@@ -1,0 +1,26 @@
+name: Move LeetCode Files
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  move-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Organize LeetCode Files
+        run: |
+          mkdir -p LeetCode
+          # LeetCode 폴더 및 .github 폴더를 제외한 모든 문제 폴더를 LeetCode/ 하위로 이동
+          find . -maxdepth 1 -type d ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' ! -name 'LeetCode' -exec mv {} LeetCode/ \;
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --quiet && git diff --cached --quiet || (git commit -m "Auto-organize LeetCode folder" && git push)
