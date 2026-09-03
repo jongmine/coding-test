@@ -11,16 +11,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 직전 커밋 정보를 온전하게 가져오기 위해 설정
 
       - name: Organize LeetCode Files
         run: |
           mkdir -p LeetCode
-          # 예외 목록(! -name)
+          # 예외 목록(! -name)을 제외하고 루트의 파일/폴더들을 LeetCode/ 내부로 이동
           find . -maxdepth 1 -type d ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' ! -name 'LeetCode' ! -name 'dingcorithm' ! -name '프로그래머스' -exec mv {} LeetCode/ \;
 
       - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add .
-          git diff --quiet && git diff --cached --quiet || (git commit -m "Auto-organize LeetCode folder" && git push)
+          
+          # LeetHub의 커밋 메시지(수행시간)를 그대로 유지(--no-edit)하면서 
+          # 파일 이동 내역만 기존 커밋에 합친 후 강제 푸시합니다.
+          git diff --quiet && git diff --cached --quiet || (git commit --amend --no-edit && git push --force)
