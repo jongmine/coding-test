@@ -26,17 +26,18 @@ def catch_me(cony_loc, brown_loc):
 
     # 모든 경우의 수를 봐야함 -> BFS, DFS
     # 시간은 선형(규칙적)이라 리스트를 사용해도 되지만, 위치가 마구잡이로(불규칙적) 움직임 -> 딕셔너리 사용
-    # N초에 위치할 수 있는 경우의 수 -> [위치] -> {시간:도달여부플래그} -> [{}, {}, ...]
-    # e.g.: [10] -> {3:True, ...}
-    visited = [{} for _ in range(max_length + 1)]
+    # N초에 위치할 수 있는 경우의 수 -> {위치:최근방문시간 N}
+    # e.g.: {10:3}
+    # visited = {}
+    visited = {brown_loc: 0}
     queue = deque([(brown_loc, time)])
 
-    while cony_loc < max_length: # 이동할 수 있는 위치
+    while cony_loc <= max_length: # 이동할 수 있는 위치
         cony_loc += time
 
         # 코니의 시간과 위치가 브라운의 시간과 위치가 동일하면 현재시간 반환
         # visited [위치]->{시간:값} 에서 cony_loc 위치에 해당하는 딕셔너리에 time이 키로 존재하면 해당 위치에 브라운이 time에 위치한다는 의미
-        if time in visited[cony_loc]:
+        if time == visited.get(cony_loc):
             return time
 
         for i in range(0, len(queue)): # while 대신 for? 현재시간에 해당하는 경우의 수만 고려하기 위함
@@ -47,20 +48,20 @@ def catch_me(cony_loc, brown_loc):
             # 유효성 검사 후 브라운 이동
             new_time = current_time + 1
 
-            # not in visited[new_loc] 조건을 통해 중복으로 큐에 적재하는 것을 방지하여 시간초과 방지
+            # 같은 위치에 같은 시간으로 이미 방문한 적이 없을때만 큐에 적재해서 시간초과 방지
             new_loc = current_loc + 1
-            if new_loc <= max_length and new_time not in visited[new_loc]: # 1. + 1 이동
-                visited[new_loc][new_time] = True
+            if new_loc <= max_length and visited.get(new_loc) != new_time: # 1. + 1 이동
+                visited[new_loc] = new_time
                 queue.append((new_loc, new_time))
 
             new_loc = current_loc - 1
-            if 0 <= new_loc and new_time not in visited[new_loc]: # 2. - 1 이동
-                visited[new_loc][new_time] = True
+            if 0 <= new_loc and visited.get(new_loc) != new_time: # 2. - 1 이동
+                visited[new_loc] = new_time
                 queue.append((new_loc, new_time))
 
             new_loc = current_loc * 2
-            if new_loc <= max_length and new_time not in visited[new_loc]: # 3. * 2 이동
-                visited[new_loc][new_time] = True
+            if new_loc <= max_length and visited.get(new_loc) != new_time: # 3. * 2 이동
+                visited[new_loc] = new_time
                 queue.append((new_loc, new_time))
 
         time += 1
@@ -73,6 +74,11 @@ print(catch_me(c, b))  # 5가 나와야 합니다!
 print("정답 = 3 / 현재 풀이 값 = ", catch_me(10,3))
 print("정답 = 8 / 현재 풀이 값 = ", catch_me(51,50))
 print("정답 = 28 / 현재 풀이 값 = ", catch_me(550,500))
+print("정답 = 0 / 현재 풀이 값 = ", catch_me(10, 10))
+print("정답 = 0 / 현재 풀이 값 = ", catch_me(200000, 200000))
+print("정답 = -1 / 현재 풀이 값 = ", catch_me(200000, 0))
+print("정답 = 5 / 현재 풀이 값 = ", catch_me(1, 0))
+print("정답 = 1 / 현재 풀이 값 = ", catch_me(0, 1))
 
 
 # 오답: 시간 초과 -> 너무 많은 경우의 수를 고려 못함
