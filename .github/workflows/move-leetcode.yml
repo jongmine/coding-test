@@ -22,7 +22,7 @@ jobs:
           # 최신 커밋 메시지가 LeetHub 커밋이 아니면 종료 (백준 등은 건드리지 않음)
           MSG=$(git log -1 --pretty=%s)
           case "$MSG" in
-            *-LeetHub) ;;
+            *"- LeetHub") ;;
             *) echo "LeetHub 커밋이 아님, 건너뜀: $MSG"; exit 0 ;;
           esac
 
