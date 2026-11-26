@@ -53,11 +53,11 @@ jobs:
           case "$SUBJECT" in
             *"- LeetHub")
               # LeetHub 커밋이면 메시지(수행시간 등)를 그대로 두고 이동 내역만 합침
-              git commit --amend --no-edit
+              # 합친 결과가 빈 커밋이어도 제출 기록(메시지)을 남기기 위해 --allow-empty
+              git commit --amend --no-edit --allow-empty
               git push --force-with-lease=main:"$OLD_HEAD" origin HEAD:main
               ;;
             *)
-              # 그 외 커밋이면 별도 커밋으로 남김 (히스토리 재작성 없음)
               git commit -m "chore: move LeetCode folders"
               git pull --rebase origin main
               git push
