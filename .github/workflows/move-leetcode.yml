@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   move-files:
     runs-on: ubuntu-latest
@@ -12,21 +15,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 직전 커밋 정보를 온전하게 가져오기 위해 설정
+          fetch-depth: 0
 
-      - name: Organize LeetCode Files
+      - name: Move newly added LeetCode folders
         run: |
+          # 최신 커밋 메시지가 LeetHub 커밋이 아니면 종료 (백준 등은 건드리지 않음)
+          MSG=$(git log -1 --pretty=%s)
+          case "$MSG" in
+            *-LeetHub) ;;
+            *) echo "LeetHub 커밋이 아님, 건너뜀: $MSG"; exit 0 ;;
+          esac
+
+          # 첫 커밋이라 비교 대상이 없으면 종료
+          git rev-parse HEAD~1 >/dev/null 2>&1 || exit 0
+
           mkdir -p LeetCode
-          # 예외 목록(! -name)을 제외하고 루트의 파일/폴더들을 LeetCode/ 내부로 이동
-          find . -maxdepth 1 -type d ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' ! -name 'LeetCode' ! -name 'dingcorithm' ! -name '프로그래머스' -exec mv {} LeetCode/ \;
 
-      - name: Commit and Push
+          # 이번 커밋이 새로 추가한 파일들의 최상위 폴더만 추출
+          git diff --name-only --diff-filter=A HEAD~1 HEAD \
+            | cut -d/ -f1 | sort -u \
+            | while read -r name; do
+                [ -z "$name" ] && continue
+                [ "$name" = "LeetCode" ] && continue
+                [ -d "$name" ] || continue
+                if [ -e "LeetCode/$name" ]; then
+                  echo "LeetCode/$name 이미 존재, 건너뜀"
+                  continue
+                fi
+                mv "$name" LeetCode/
+              done
+
+      - name: Commit and push
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add .
-          
-          # LeetHub의 커밋 메시지(수행시간)를 그대로 유지(--no-edit)하면서 
-          # 파일 이동 내역만 기존 커밋에 합친 후 강제 푸시합니다.
-          git diff --quiet && git diff --cached --quiet || (git commit --amend --no-edit && git push --force)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "변경 사항 없음"
+            exit 0
+          fi
+          git commit -m "chore: move LeetCode folders"
+          git pull --rebase origin main
+          git push
